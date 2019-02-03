@@ -1,10 +1,10 @@
 <template>
-  <b-container fluid>
+  <b-container>
     <b-row>
-      <b-col offset-md="2" md="8">
+      <b-col md="12">
         <h1>Vue.js + GitHub Issues</h1>
         <hr>
-        <p>List issues from a Github repository using Vue.</p>
+        <p class="lead">List issues from a Github repository using Vue.</p>
         <b-form inline @submit="onSubmit" @reset="onReset">
           <label for="username" class="sr-only">Username</label>
           <b-input id="username" class="mb-2 mr-sm-2 mb-sm-0" type="text" v-model="form.username" required placeholder="Username" />
@@ -14,35 +14,60 @@
           <b-button class="mb-2 mr-sm-2 mb-sm-0" type="reset" variant="danger">Reset</b-button>
         </b-form>
         <hr>
-        <b-table bordered :items="issues">
+        <b-table bordered :items="issues" v-if="issues.length > 0">
         </b-table>
+        <b-alert variant="warning" :show="error.status === 'error'" v-text="error.message"></b-alert>
       </b-col>
     </b-row>
   </b-container>
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
+  name: "GitHubIssues",
+
   data() {
     return {
       form: {
         username: "",
         repository: ""
       },
-      issues: [{ number: 123, title: "Test" }, { number: 456, title: "Test 2" }]
+      issues: [],
+      error: {
+        status: "",
+        message: ""
+      }
     };
   },
 
   methods: {
-    onSubmit(evt) {
+    async onSubmit(evt) {
       evt.preventDefault();
-      console.log(this.form.username);
-      console.log(this.form.repository);
+      try {
+        const url = `https://api.github.com/repos/${this.form.username}/${
+          this.form.repository
+        }/issues`;
+        const result = await axios.get(url);
+        this.issues = result.data.map(issue => ({
+          number: issue.number,
+          title: issue.title
+        }));
+      } catch {
+        this.error.status = "error";
+        this.error.message = "Not found";
+        this.issues = [];
+      }
     },
+
     onReset(evt) {
       evt.preventDefault();
       this.form.username = "";
       this.form.repository = "";
+      this.issues = [];
+      this.error.status = "";
+      this.error.message = "";
     }
   }
 };
