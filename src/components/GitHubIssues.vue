@@ -14,9 +14,10 @@
           <b-button class="mb-2 mr-sm-2 mb-sm-0" type="reset" variant="danger">Reset</b-button>
         </b-form>
         <hr>
-        <b-table bordered :items="issues" v-if="issues.length > 0">
+        <img src="/loading.svg" alt="Loading..." v-if="loader.getIssues">
+        <b-table bordered :items="issues" v-if="!loader.getIssues && issues.length > 0">
         </b-table>
-        <b-alert variant="warning" :show="error.status === 'error'" v-text="error.message"></b-alert>
+        <b-alert variant="warning" :show="!loader.getIssues && error.status === 'error'" v-text="error.message"></b-alert>
       </b-col>
     </b-row>
   </b-container>
@@ -38,6 +39,9 @@ export default {
       error: {
         status: "",
         message: ""
+      },
+      loader: {
+        getIssues: false
       }
     };
   },
@@ -46,6 +50,7 @@ export default {
     async onSubmit(evt) {
       evt.preventDefault();
       try {
+        this.loader.getIssues = true;
         const url = `https://api.github.com/repos/${this.form.username}/${
           this.form.repository
         }/issues`;
@@ -58,6 +63,8 @@ export default {
         this.error.status = "error";
         this.error.message = "Not found";
         this.issues = [];
+      } finally {
+        this.loader.getIssues = false;
       }
     },
 
