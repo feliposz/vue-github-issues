@@ -20,11 +20,12 @@
 
         <hr>
 
-        <img src="/loading.svg" alt="Loading..." v-if="loader.getIssues || loader.getIssue">
+        <img src="/loading.svg" alt="Loading..." v-if="loader.getIssues">
 
-        <b-table bordered :fields="fields" :items="issues" v-if="!loader.getIssues && issues.length > 0 && !loader.getIssues && !selectedIssue.number">
+        <b-table bordered :fields="fields" :items="issues" v-if="!loader.getIssues && issues.length > 0 && !selectedIssue.number">
           <template slot="number" slot-scope="data">
-            <a @click.prevent.stop="getIssue(data.value)" href="">{{data.value}}</a>
+            <a @click.prevent.stop="getIssue(data.item)" href="">{{data.value}}</a>
+            <img src="/loading.svg" alt="Loading..." v-if="data.item.is_loading">
           </template>
           <template slot="title" slot-scope="data">
             {{data.value}}
@@ -33,7 +34,7 @@
 
         <b-alert variant="warning" :show="!loader.getIssues && error.status === 'error'" v-text="error.message"></b-alert>
 
-        <template v-if="!loader.getIssue && selectedIssue.number">
+        <template v-if="selectedIssue.number">
           <h1>{{selectedIssue.title}}</h1>
           <div>{{selectedIssue.body}}</div>
           <b-button variant="primary" @click.prevent.stop="clearIssue">Back</b-button>
@@ -97,19 +98,20 @@ export default {
         this.issues = result.data;
       } catch {
         this.error.status = "error";
-        this.error.message = "Not found";
+        this.error.message = "Repository not found";
         this.issues = [];
       } finally {
         this.loader.getIssues = false;
       }
     },
 
-    async getIssue(issueNumber) {
+    async getIssue(issue) {
+      console.log(issue);
       try {
-        this.loader.getIssue = true;
+        this.$set(issue, 'is_loading', true);
         const url = `https://api.github.com/repos/${this.form.username}/${
           this.form.repository
-        }/issues/${issueNumber}`;
+        }/issues/${issue.number}`;
         const result = await axios.get(url);
         this.selectedIssue = result.data;
       } catch {
@@ -117,7 +119,7 @@ export default {
         this.error.message = "Issue not found";
         this.selectedIssue = {};
       } finally {
-        this.loader.getIssue = false;
+        this.$set(issue, 'is_loading', false);
       }
     },
 
