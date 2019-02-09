@@ -22,10 +22,9 @@
 
         <img src="/loading.svg" alt="Loading..." v-if="loader.getIssues">
 
-        <b-table bordered :fields="fields" :items="issues" v-if="!loader.getIssues && issues.length > 0 && !selectedIssue.number">
+        <b-table bordered :fields="fields" :items="issues" v-if="!loader.getIssues && issues.length > 0">
           <template slot="number" slot-scope="data">
-            <a @click.prevent.stop="getIssue(data.item)" href="">{{data.value}}</a>
-            <img src="/loading.svg" alt="Loading..." v-if="data.item.is_loading">
+            <router-link :to="{ name: 'GitHubIssue', params: { username: form.username, repository: form.repository, issue: data.value } }">{{ data.value }}</router-link>
           </template>
           <template slot="title" slot-scope="data">
             {{data.value}}
@@ -33,12 +32,6 @@
         </b-table>
 
         <b-alert variant="warning" :show="!loader.getIssues && error.status === 'error'" v-text="error.message"></b-alert>
-
-        <template v-if="selectedIssue.number">
-          <h1>{{selectedIssue.title}}</h1>
-          <div>{{selectedIssue.body}}</div>
-          <b-button variant="primary" @click.prevent.stop="clearIssue">Back</b-button>
-        </template>
 
       </b-col>
     </b-row>
@@ -61,14 +54,12 @@ export default {
       },
       fields: ["number", "title"],
       issues: [],
-      selectedIssue: {},
       error: {
         status: "",
         message: ""
       },
       loader: {
-        getIssues: false,
-        getIssue: false
+        getIssues: false
       }
     };
   },
@@ -81,6 +72,10 @@ export default {
 
     onReset(evt) {
       evt.preventDefault();
+      this.resetForm();
+    },
+
+    resetForm() {
       this.form.username = "";
       this.form.repository = "";
       this.issues = [];
@@ -103,28 +98,6 @@ export default {
       } finally {
         this.loader.getIssues = false;
       }
-    },
-
-    async getIssue(issue) {
-      console.log(issue);
-      try {
-        this.$set(issue, 'is_loading', true);
-        const url = `https://api.github.com/repos/${this.form.username}/${
-          this.form.repository
-        }/issues/${issue.number}`;
-        const result = await axios.get(url);
-        this.selectedIssue = result.data;
-      } catch {
-        this.error.status = "error";
-        this.error.message = "Issue not found";
-        this.selectedIssue = {};
-      } finally {
-        this.$set(issue, 'is_loading', false);
-      }
-    },
-
-    clearIssue() {
-      this.selectedIssue = {};
     }
   }
 };
