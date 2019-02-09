@@ -22,7 +22,7 @@
 
         <img src="/loading.svg" alt="Loading..." v-if="loader.getIssues">
 
-        <b-table bordered :fields="fields" :items="issues" v-if="!loader.getIssues && issues.length > 0">
+        <b-table bordered :fields="fields" :items="issues" v-if="showIssues">
           <template slot="number" slot-scope="data">
             <router-link :to="{ name: 'GitHubIssue', params: { username: form.username, repository: form.repository, issue: data.value } }">{{ data.value }}</router-link>
           </template>
@@ -31,7 +31,9 @@
           </template>
         </b-table>
 
-        <b-alert variant="warning" :show="!loader.getIssues && error.status === 'error'" v-text="error.message"></b-alert>
+        <b-alert variant="warning" :show="noIssues">No issues found</b-alert>
+
+        <b-alert variant="danger" :show="showError">{{ response.message }}</b-alert>
 
       </b-col>
     </b-row>
@@ -58,7 +60,7 @@ export default {
       },
       fields: ["number", "title"],
       issues: [],
-      error: {
+      response: {
         status: "",
         message: ""
       },
@@ -85,21 +87,25 @@ export default {
       this.form.username = "";
       this.form.repository = "";
       this.issues = [];
-      this.error.status = "";
-      this.error.message = "";
+      this.resetResponse();
+    },
+
+    resetResponse() {
+      this.response.status = "";
+      this.response.message = "";
     },
 
     async getIssues() {
       try {
         this.loader.getIssues = true;
-        const url = `https://api.github.com/repos/${this.form.username}/${
-          this.form.repository
-        }/issues`;
+        const { username, repository } = this.form;
+        const url = `https://api.github.com/repos/${username}/${repository}/issues`;
         const result = await axios.get(url);
+        this.resetResponse();
         this.issues = result.data;
       } catch {
-        this.error.status = "error";
-        this.error.message = "Repository not found";
+        this.response.status = "error";
+        this.response.message = "Repository not found";
         this.issues = [];
       } finally {
         this.loader.getIssues = false;
@@ -120,7 +126,7 @@ export default {
       const localData = JSON.parse(
         localStorage.getItem("vue-github-issues-data")
       );
-      if (localData.username && localData.repository) {
+      if (localData && localData.username && localData.repository) {
         this.form.username = localData.username;
         this.form.repository = localData.repository;
         this.getIssues();
@@ -129,6 +135,20 @@ export default {
 
     clearLocalData() {
       localStorage.removeItem("vue-github-issues-data");
+    }
+  },
+
+  computed: {
+    showIssues() {
+      return this.response.status !== "error" && !this.loader.getIssues && this.issues.length > 0;
+    },
+
+    noIssues() {
+      return this.response.status !== "error" && !this.loader.getIssues && this.issues.length === 0;
+    },
+
+    showError() {
+      return this.response.status === "error";
     }
   }
 };
