@@ -46,6 +46,10 @@ axios.defaults.headers.common.Accept = "application/vnd.github.v3+json";
 export default {
   name: "GitHubIssues",
 
+  created() {
+    this.loadLocalData();
+  },
+
   data() {
     return {
       form: {
@@ -68,11 +72,13 @@ export default {
     async onSubmit(evt) {
       evt.preventDefault();
       await this.getIssues();
+      this.saveLocalData();
     },
 
     onReset(evt) {
       evt.preventDefault();
       this.resetForm();
+      this.clearLocalData();
     },
 
     resetForm() {
@@ -98,6 +104,31 @@ export default {
       } finally {
         this.loader.getIssues = false;
       }
+    },
+
+    saveLocalData() {
+      localStorage.setItem(
+        "vue-github-issues-data",
+        JSON.stringify({
+          username: this.form.username,
+          repository: this.form.repository
+        })
+      );
+    },
+
+    loadLocalData() {
+      const localData = JSON.parse(
+        localStorage.getItem("vue-github-issues-data")
+      );
+      if (localData.username && localData.repository) {
+        this.form.username = localData.username;
+        this.form.repository = localData.repository;
+        this.getIssues();
+      }
+    },
+
+    clearLocalData() {
+      localStorage.removeItem("vue-github-issues-data");
     }
   }
 };

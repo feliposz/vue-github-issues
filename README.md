@@ -1,5 +1,9 @@
 # vue-github-issues
 
+Small project to demonstrate `Vue.js` consuming a GitHub API using `axios` and `bootstrap-vue`.
+
+Inspired by Tiago Matos [tutorial](https://www.youtube.com/playlist?list=PLcoYAcR89n-qq1vGRbaUiV6Q9puy0qigW) on `Vue.js`.
+
 ## Project setup
 ```
 npm install
