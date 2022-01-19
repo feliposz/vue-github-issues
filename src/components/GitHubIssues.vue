@@ -23,10 +23,10 @@
         <img src="/loading.svg" alt="Loading..." v-if="loader.getIssues">
 
         <b-table bordered :fields="fields" :items="issues" v-if="showIssues">
-          <template slot="number" slot-scope="data">
+          <template #cell(number)="data">
             <router-link :to="{ name: 'GitHubIssue', params: { username: form.username, repository: form.repository, issue: data.value } }">{{ data.value }}</router-link>
           </template>
-          <template slot="title" slot-scope="data">
+          <template #cell(title)="data">
             {{data.value}}
           </template>
         </b-table>
